@@ -1,0 +1,12 @@
+Semester: 4
+CourseName: DISCRETE MATHEMATICS
+CourseCode: MA3401
+objective: To familiarize the applications of algebraic structur
+CourseDescription: The intial step of setting up a development environment is choosing the appropriate tool to complete the application setup. This application requires you to have a linux environment specifically an Ubuntu. However, if you are working out of a windows operating system during development we would recommend you use cloud9 Cloud9
+Prerequisites: The intial step of setting up a development environment is choosing the appropriate tool to complete the application setup. This application requires you to have a linux environment specifically an Ubuntu. However, if you are working out of a windows operating system during development we would recommend you use cloud9 Cloud9
+unit_title: SETS AND ALGEBRAIC STRUC
+unit_content: The intial step of setting up a development environment is choosing the appropriate tool to complete the application setup. This application requires you to have a linux environment specifically an Ubuntu. However, if you are working out of a windows operating system during development we would recommend you use cloud9 Cloud9
+AssessmentsGrading: The intial step of setting up a development environment is choosing the appropriate tool to complete the application setup. This application requires you to have a linux environment specifically an Ubuntu. However, if you are working out of a windows operating system during development we would recommend you use cloud9 Cloud9
+course_outcome: 1
+textbook: Kenneth H. Rosen. “Discrete Mathematics and Its Applications”, 8th Edition, McGraw-Hill Education, 2021
+reference: 3.J. A. Bondy and U. S. R. Murty, “Graph Theory with Applications”, Macmillan Press, London, 197

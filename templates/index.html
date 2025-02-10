@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Document Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar with Available Sections -->
+    <aside class="sidebar">
+      <h3>Available Sections to Add</h3>
+      <button type="button" onclick="addSection('courseObjectives')">Add Course Objectives</button>
+      <button type="button" onclick="addSection('courseDescription')">Add Course Description</button>
+      <button type="button" onclick="addSection('prerequisites')">Add Prerequisites</button>
+      <button type="button" onclick="addSection('courseUnits')">Add Course Units</button>
+      <button type="button" onclick="addSection('assessmentsGrading')">Add Assessments & Grading</button>
+      <button type="button" onclick="addSection('courseOutcomes')">Add Course Outcomes</button>
+      <button type="button" onclick="addSection('textbooks')">Add Textbooks</button>
+      <button type="button" onclick="addSection('references')">Add References</button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Enter Course Details</h2>
+      <form id="courseForm" method="POST" action="/generate" enctype="multipart/form-data">
+        <!-- Heading Section -->
+        <div class="section" id="headingSection">
+          <h3>Heading</h3>
+          <label>Semester: <input type="text" name="Semester"></label><br>
+          <label>Course Name: <input type="text" name="CourseName"></label><br>
+          <label>Course Code: <input type="text" name="CourseCode"></label><br>
+          <button type="button" onclick="removeSection('headingSection')">Remove Section</button>
+        </div>
+
+        <!-- Course Objectives Section -->
+        <div class="section" id="courseObjectives" style="display:none;">
+          <h3>Course Objectives</h3>
+          <div id="objectiveFields">
+            <input type="text" name="objective" placeholder="Objective 1">
+            <input type="text" name="objective" placeholder="Objective 2">
+            <input type="text" name="objective" placeholder="Objective 3">
+            <input type="text" name="objective" placeholder="Objective 4">
+            <input type="text" name="objective" placeholder="Objective 5">
+          </div>
+          <button type="button" id="addObjective">+ Add Objective</button>
+          <button type="button" onclick="removeSection('courseObjectives')">Remove Section</button>
+        </div>
+
+        <!-- Course Description Section -->
+        <div class="section" id="courseDescription" style="display:none;">
+          <h3>Course Description</h3>
+          <textarea name="CourseDescription"></textarea>
+          <button type="button" onclick="removeSection('courseDescription')">Remove Section</button>
+        </div>
+
+        <!-- Prerequisites Section -->
+        <div class="section" id="prerequisites" style="display:none;">
+          <h3>Prerequisites</h3>
+          <textarea name="Prerequisites"></textarea>
+          <button type="button" onclick="removeSection('prerequisites')">Remove Section</button>
+        </div>
+
+        <!-- Course Units Section -->
+        <div id="courseUnits" class="section" style="display:none;">
+          <h3>Course Units</h3>
+          <div id="unitFields">
+              <!-- Initially populated unit fields (first unit) -->
+              <div class="unit-item">
+                  <input type="text" name="unit_title_1" placeholder="Unit Title 1" >
+                  <textarea name="unit_content_1" placeholder="Unit Content 1" ></textarea>
+                  <input type="number" name="unit_periods_1" placeholder="No. of Periods">
+              </div>
+          </div>
+          <button type="button" id="addUnit">+ Add Course Unit</button>
+          <button type="button" onclick="removeSection('courseUnits')">Remove Section</button>
+
+
+          <input type="checkbox" id="hidden_hasPractical" name="hasPractical" value="off" style="display:none;" >
+
+          <label>
+              <input type="checkbox" id="practical_checkbox" name="hasPractical" value="on" onchange="togglePracticalPeriods()">
+              Include Practical Periods
+          </label>
+
+        <div id="practical_periods_section" style="display:none;">
+            <h3>Practical Periods</h3>
+            <label for="practical_periods">Enter Practical Periods:</label>
+            <input type="number" id="practical_periods" name="practical_periods" placeholder="Practical Periods">
+        </div>
+
+        </div>
+
+        
+
+
+        <!-- Assessments & Grading Section -->
+        <div class="section" id="assessmentsGrading" style="display:none;">
+          <h3>Assessments & Grading</h3>
+          <textarea name="AssessmentsGrading"></textarea>
+          <button type="button" onclick="removeSection('assessmentsGrading')">Remove Section</button>
+        </div>
+
+        <!-- Course Outcomes Section -->
+        <div class="section" id="courseOutcomes" style="display:none;">
+          <h3>Course Outcomes</h3>
+          <div id="outcomeFields">
+            <input type="text" name="course_outcome" placeholder="CO1">
+            <input type="text" name="course_outcome" placeholder="CO2">
+            <input type="text" name="course_outcome" placeholder="CO3">
+            <input type="text" name="course_outcome" placeholder="CO4">
+            <input type="text" name="course_outcome" placeholder="CO5">
+          </div>
+          <button type="button" id="addOutcome" onclick="addInputField('outcomeFields')">+ Add Course Outcome</button>
+          <button type="button" onclick="removeSection('courseOutcomes')">Remove Section</button>
+        </div>
+
+        <!-- Textbooks Section -->
+        <div class="section" id="textbooks" style="display:none;">
+          <h3>Textbooks</h3>
+          <div id="textbookFields">
+            <input type="text" name="textbook" placeholder="Textbook 1">
+            <input type="text" name="textbook" placeholder="Textbook 2">
+            <input type="text" name="textbook" placeholder="Textbook 3">
+          </div>
+          <button type="button" id="addTextbook" onclick="addInputField('textbookFields')">+ Add Textbook</button>
+          <button type="button" onclick="removeSection('textbooks')">Remove Section</button>
+        </div>
+
+        <!-- References Section -->
+        <div class="section" id="references" style="display:none;">
+          <h3>References</h3>
+          <div id="referenceFields">
+            <input type="text" name="reference" placeholder="Reference 1">
+            <input type="text" name="reference" placeholder="Reference 2">
+            <input type="text" name="reference" placeholder="Reference 3">
+          </div>
+          <button type="button" id="addReference" onclick="addInputField('referenceFields')">+ Add Reference</button>
+          <button type="button" onclick="removeSection('references')">Remove Section</button>
+        </div>
+
+        <button type="submit">Generate Document</button>
+      </form>
+    </main>
+  </div>
+    <script>
+        function togglePracticalPeriods() {
+            var checkbox = document.getElementById("practical_checkbox");
+            var section = document.getElementById("practical_periods_section");
+            section.style.display = checkbox.checked ? "block" : "none";
+        }
+    </script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

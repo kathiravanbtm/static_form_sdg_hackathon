@@ -1,0 +1,252 @@
+/* Base Styles */
+body {
+    background-color: #f0ebf8;
+    font-family: 'Google Sans', Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 2rem;
+}
+
+h2 {
+    color: #202124;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 2rem;
+}
+
+h3 {
+    color: #5f6368;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 1.5rem 0 1rem;
+    text-transform: uppercase;
+}
+
+/* Flex Container for Sidebar and Main Content */
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: auto;
+    gap: 2rem;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    flex: 0 0 250px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 1.5rem;
+    background: #f9f9f9;
+}
+
+.sidebar h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #5f6368;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+.sidebar button {
+    display: block;
+    width: 100%;
+    background-color: transparent;
+    border: 1px solid #1a73e8;
+    color: #1a73e8;
+    padding: 10px;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.2s;
+}
+
+.sidebar button:hover {
+    background-color: #e8f0fe;
+}
+
+/* Main Content / Form Styles */
+.main-content {
+    flex: 1;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 2rem;
+}
+
+.main-content h2 {
+    color: #202124;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 2rem;
+}
+
+/* Form Element Styles */
+form label {
+    color: #202124;
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    margin: 0;
+    cursor: pointer; 
+}
+
+form input[type="text"],
+form textarea,
+form select,
+form input[type="number"] {
+    background-color: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    color: #202124;
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 14px;
+    margin-bottom: 1rem;
+    padding: 13px 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+form input[type="text"]:focus,
+form textarea:focus,
+form input[type="number"]:focus {
+    border: 2px solid #1a73e8;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+form textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+/* Checkbox Styling */
+form input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+form .checkbox-container {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* Practical Periods Section (Styled like other inputs) */
+#practical_periods_section {
+    border-radius: 4px;
+    margin-top: 20px;
+    display: none;
+    box-sizing: border-box;
+}
+
+#practical_periods_section label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 0.5rem;
+}
+
+#practical_periods_section input[type="number"] {
+    padding: 13px 15px;
+    font-size: 14px;
+    color: #202124;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#practical_periods_section input[type="number"]:focus {
+    border: 2px solid #1a73e8;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Primary Form Submit Button */
+form button[type="submit"] {
+    background-color: #1a73e8;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-family: 'Google Sans', Roboto, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 1rem;
+    padding: 12px 24px;
+    text-transform: uppercase;
+    transition: background-color 0.2s;
+}
+
+form button[type="submit"]:hover {
+    background-color: #1557b0;
+}
+
+/* Generic Button for Add/Remove Actions within the Form */
+form button[type="button"] {
+    background-color: transparent;
+    border: 1px solid #1a73e8;
+    color: #1a73e8;
+    margin: 0.5rem 0;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.2s;
+}
+
+form button[type="button"]:hover {
+    background-color: #e8f0fe;
+}
+
+/* Remove Button Styling */
+.remove-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin-left: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.remove-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Section Styles */
+.section {
+    margin-bottom: 1.5rem;
+}
+
+#headingSection button,
+#courseObjectives button,
+#courseDescription button,
+#prerequisites button,
+#courseUnits button,
+#assessmentsGrading button,
+#courseOutcomes button,
+#textbooks button,
+#references button {
+    margin-top: 1rem;
+    display: inline-block;
+}
+
+/* Initially Hidden Dynamic Sections */
+#courseObjectives, 
+#courseDescription, 
+#prerequisites, 
+#courseUnits, 
+#assessmentsGrading, 
+#courseOutcomes, 
+#textbooks, 
+#references {
+    display: none;
+}
