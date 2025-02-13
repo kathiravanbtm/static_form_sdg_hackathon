@@ -4,6 +4,7 @@ from docx import Document
 import os
 import io
 import re 
+from docx.shared import Pt 
 
 app = Flask(__name__)
 
@@ -54,29 +55,6 @@ def generate_doc():
 
     doc = Document(template_path)
 
-
-
-
-
-    print("Form Data Received:", request.form.to_dict())  # Debugging
-
-    # Print out the raw POST data for additional debugging
-    print(f"Raw Form Data: {request.form}")
-
-    has_practical = request.form.get("hasPractical")  # Should be 'on' or 'off'
-    print(f"hasPractical: {has_practical}")  # Debugging output
-
-    practical_periods = request.form.get("practical_periods") if has_practical == "on" else "<REMOVE>"
-    print(f"Practical Periods: {practical_periods}")
-
-
-
-
-
-
-
-
-
    # Collect form data and clean all text fields if pasted from PDF
     semester = request.form.get('Semester', '')
     course_name = request.form.get('CourseName', '')
@@ -120,9 +98,7 @@ def generate_doc():
 
     # Collect Practical Periods checkbox and value
     has_practical = request.form.get('hasPractical')  
-    print(has_practical)# This will be 'on' if checked
     practical_periods = request.form.get('practical_periods') if has_practical else "<REMOVE>"
-    print(practical_periods)
     # Add practical periods to placeholders if applicable
     if has_practical and practical_periods:
         placeholders["{PracticalPeriodsName}"] = "PRACTICAL PERIODS "
@@ -133,39 +109,37 @@ def generate_doc():
 
     # Dynamically collect and format units including the number of periods
     units = []
-    total_periods = 0  # Initialize the total periods counter
+    total_periods = 0
     i = 1
+
     while True:
-        unit_title = clean_pdf_text(request.form.get(f'unit_title_{i}', ''))  # Clean unit title
-        unit_content = clean_pdf_text(request.form.get(f'unit_content_{i}', ''))  # Clean unit content
-        unit_periods = request.form.get(f'unit_periods_{i}')  # Collect the number of periods
-        
+        unit_title = clean_pdf_text(request.form.get(f'unit_title_{i}', ''))
+        unit_content = clean_pdf_text(request.form.get(f'unit_content_{i}', ''))
+        unit_periods = request.form.get(f'unit_periods_{i}')
+
         if not unit_title or not unit_content:
             break
-        
-        # Ensure the periods are a number and add to total_periods
+
         try:
             unit_periods = int(unit_periods) if unit_periods else 0
         except ValueError:
-            unit_periods = 0  # If the value is invalid, set periods to 0
-        
-        total_periods += unit_periods  # Add the unit periods to the total
-        
+            unit_periods = 0
+
+        total_periods += unit_periods
         units.append((unit_title, unit_content, unit_periods))
         i += 1
-
     # Format units into a structured text block with periods
     units_text = ""
     for i, (unit_title, unit_content, unit_periods) in enumerate(units, 1):
         units_text += f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n\n{unit_content}\n\n"
 
     # Add formatted units and total periods to placeholders
-    placeholders["{Units}"] = units_text if units_text.strip() else "<REMOVE>"
     placeholders["{TotalPeriods}"] ="TOTAL NUMBER OF PERIODS:" + str(total_periods) if total_periods > 0 else "<REMOVE>"
 
-    # Replace placeholders in the document
+    replace_units_with_formatting(doc, units)
+    # print(placeholders)
     replace_placeholders_in_doc(doc, placeholders)
-
+    
     # Save and return the generated document
     file_stream = io.BytesIO()
     doc.save(file_stream)
@@ -206,6 +180,35 @@ def replace_placeholders_in_paragraph(paragraph, placeholders):
                 run.text = full_text
             else:
                 run.text = ""
+def replace_units_with_formatting(doc, units):
+    """Finds {Units} placeholder and inserts formatted units with proper indentation & normal content formatting."""
+    for paragraph in doc.paragraphs:
+        if "{Units}" in paragraph.text:
+            p_element = paragraph._element  # Store reference to remove placeholder
+            parent = p_element.getparent()  # Get parent XML element
+            paragraph_style = paragraph.style  # Store the style of the original paragraph
+
+            # Create a new paragraph at the same location before removing {Units}
+            new_paragraph = paragraph.insert_paragraph_before("")
+            new_paragraph.style = paragraph_style  # Apply the same style as the placeholder
+            parent.remove(p_element)  # Remove {Units} placeholder
+
+            for i, (unit_title, unit_content, unit_periods) in enumerate(units, 1):
+                # Insert Unit Title (Bold) with correct style
+                title_paragraph = new_paragraph.insert_paragraph_before("")
+                title_paragraph.style = paragraph_style  # Apply same style
+                title_run = title_paragraph.add_run(f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n")
+                title_run.bold = True
+                title_run.font.size = Pt(12)
+
+                # Insert Unit Content (Normal) with correct indentation
+                content_paragraph = new_paragraph.insert_paragraph_before("")
+                content_paragraph.style = paragraph_style  # Apply same style
+                content_run = content_paragraph.add_run(f"{unit_content}\n\n")
+                content_run.bold = False  # 🔥 Fix: Ensure normal text
+                content_run.font.size = Pt(11)
+
+            break 
 
 if __name__ == '__main__':
     app.run(debug=True)
