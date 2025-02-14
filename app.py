@@ -164,7 +164,6 @@ def generate_doc():
     course_format = clean_pdf_text(request.form.get('courseformat', ''))
     assessments = clean_pdf_text(request.form.get('assessments', ''))
     grading = clean_pdf_text(request.form.get('grading', ''))
-    print(course_format)
     # Format placeholders into readable lists and apply `<REMOVE>` for empty values
     placeholders = {
         "{Semester}": semester if semester else "<REMOVE>",
@@ -217,6 +216,26 @@ def generate_doc():
     for i, (unit_title, unit_content, unit_periods) in enumerate(units, 1):
         units_text += f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n{unit_content}"
     # Add formatted units and total periods to placeholders
+
+
+
+    youtube_references = []
+    i = 1
+
+    while True:
+        youtube_title = clean_pdf_text(request.form.get(f'youtube_title_{i}', ''))
+        youtube_desc = clean_pdf_text(request.form.get(f'youtube_desc_{i}', ''))
+        youtube_url = request.form.get(f'youtube_url_{i}', '')
+
+        if not youtube_title or not youtube_desc or not youtube_url:
+            break  # Stop if any field is missing
+
+        youtube_references.append((youtube_title, youtube_desc, youtube_url))
+        i += 1
+
+    youtube_text = ""
+    for i, (youtube_title, youtube_desc, youtube_url) in enumerate(youtube_references, 1):
+        youtube_text += f"Video {i}: {youtube_title}\nDescription: {youtube_desc}\nURL: {youtube_url}\n\n"
     placeholders["{TotalPeriods}"] ="NUMBER OF THEORY PERIODS:" + str(total_periods) if total_periods > 0 else "<REMOVE>"
     replace_list_section(doc, "{Objectives}", objectives, title="COURSE OBJECTIVES")
     replace_list_section(doc, "{Experiments}", experiments,title = "LIST OF EXPERIMENTS")
@@ -234,7 +253,7 @@ def generate_doc():
     replace_practical_periods(doc, practical_periods)    
     total_periods = request.form.get('TotalPeriods', '')
     practical_periods = request.form.get('PracticalPeriods', '')
-
+    replace_youtube_references_with_formatting(doc, youtube_references)
     # ✅ Call functions to replace placeholders
     replace_total_periods(doc, units)
     replace_practical_periods(doc, practical_periods)
@@ -345,6 +364,43 @@ def replace_course_description(doc, course_description):
             return  # Stop after replacing the first occurrence
 
 
+
+def replace_youtube_references_with_formatting(doc, youtube_references):
+    """Replaces {YouTubeReferences} placeholder in a DOCX file with formatted YouTube reference data."""
+    for paragraph in doc.paragraphs:
+        if "{YouTubeReferences}" in paragraph.text:
+            p_element = paragraph._element  # Reference to remove placeholder
+            parent = p_element.getparent()  # Get parent XML element
+            paragraph_style = paragraph.style  # Store the style of the original paragraph
+
+            new_paragraph = paragraph.insert_paragraph_before("")
+            new_paragraph.style = paragraph_style
+            parent.remove(p_element)  # Remove {YouTubeReferences} placeholder
+
+            for i, (youtube_title, youtube_desc, youtube_url) in enumerate(youtube_references, 1):
+                # Create a single paragraph for Title & Description
+                single_paragraph = new_paragraph.insert_paragraph_before("")
+                single_paragraph.style = paragraph_style
+
+                # Insert Video Title (Bold & Clickable)
+                title_run = single_paragraph.add_run(youtube_title)
+                title_run.bold = True
+                title_run.font.size = Pt(11)
+                make_hyperlink(title_run, youtube_url)  # Make title clickable
+
+                # Append Description (Normal) immediately after Title
+                desc_run = single_paragraph.add_run(f" - {youtube_desc}")  
+                desc_run.bold = False  # Ensure only title is bold
+                desc_run.font.size = Pt(11)
+
+            break  # Stop after replacing the first occurrence
+
+def make_hyperlink(run, url):
+    """Converts a run into a clickable hyperlink in a DOCX file."""
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), url)  # Set the link
+    run_element = run._r
+    run_element.append(hyperlink)
 
 def replace_prerequisites(doc, prerequisites):
     """Adds 'PREREQUISITES' title above {Prerequisites} while maintaining formatting."""
