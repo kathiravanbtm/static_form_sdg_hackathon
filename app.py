@@ -214,7 +214,6 @@ def generate_doc():
         i += 1
     # Format units into a structured text block with periods
     units_text = ""
-    print(course_format)
     for i, (unit_title, unit_content, unit_periods) in enumerate(units, 1):
         units_text += f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n{unit_content}"
     # Add formatted units and total periods to placeholders

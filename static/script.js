@@ -113,6 +113,65 @@ document.addEventListener("DOMContentLoaded", function () {
             objectivesDiv.appendChild(objectiveDiv);
         });
     }
+    
+
+    var addYouTubeBtn = document.getElementById("addYouTube");
+let youtubeCount = 1; // Keep track of YouTube references
+
+if (addYouTubeBtn) {
+    addYouTubeBtn.addEventListener("click", function () {
+        const youtubeFields = document.getElementById("youtubeFields");
+
+        // Increment the YouTube reference count
+        youtubeCount++;
+
+        // Create a new YouTube reference div
+        const youtubeDiv = document.createElement("div");
+        youtubeDiv.className = "youtube-item";
+
+        // Create the YouTube title input field
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.name = `youtube_title_${youtubeCount}`;
+        titleInput.placeholder = `Video Title ${youtubeCount}`;
+        titleInput.required = true;
+
+        // Create the YouTube description textarea field
+        const descTextarea = document.createElement("textarea");
+        descTextarea.name = `youtube_desc_${youtubeCount}`;
+        descTextarea.placeholder = `Video Description ${youtubeCount}`;
+        descTextarea.required = true;
+
+        // Create the YouTube URL input field
+        const urlInput = document.createElement("input");
+        urlInput.type = "text";
+        urlInput.name = `youtube_url_${youtubeCount}`;
+        urlInput.placeholder = `YouTube URL ${youtubeCount}`;
+        urlInput.required = true;
+
+        // Create the remove button for this reference
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "remove-btn";
+        removeBtn.innerText = "Remove";
+        removeBtn.onclick = function () {
+            youtubeDiv.remove();
+        };
+
+        // Append the new input fields and button to the YouTube div
+        youtubeDiv.appendChild(titleInput);
+        youtubeDiv.appendChild(descTextarea);
+        youtubeDiv.appendChild(urlInput);
+        youtubeDiv.appendChild(removeBtn);
+
+        // Append the new YouTube div to the youtubeFields container
+        youtubeFields.appendChild(youtubeDiv);
+    });
+}
+
+
+
+
 
     /***** Course Units Dynamic Input *****/
     let unitCount = 1; // Initialize unit count
