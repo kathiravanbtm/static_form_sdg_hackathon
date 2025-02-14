@@ -80,8 +80,10 @@ def replace_list_section(doc, placeholder, items, title=""):
             
             # Insert title (if provided)
             if title:
-                title_paragraph = paragraph.insert_paragraph_before("")
-                title_paragraph.style = paragraph.style  # Keep same style
+                title_paragraph = paragraph.insert_paragraph_before()
+                title_paragraph.style = paragraph.style
+                title_paragraph.paragraph_format.space_before = Pt(12)  # 🔥 Space before title
+                title_paragraph.paragraph_format.space_after = Pt(6)    # Keep same style
                 title_run = title_paragraph.add_run(title)
                 title_run.bold = True
                 title_run.font.size = Pt(11)
@@ -111,29 +113,28 @@ def replace_list_section(doc, placeholder, items, title=""):
 
             return
 
-def clean_pdf_text(input_text):
-    # Replace multiple newlines with a single space
-    cleaned_text = re.sub(r'\n+', ' ', input_text)
+def clean_pdf_text(text):
+    """Cleans extracted text while recognizing manual 'Enter' presses inside lists."""
+    if not text:
+        return ""
 
-    # Remove leading/trailing whitespace
-    cleaned_text = cleaned_text.strip()
+    # ✅ Trim leading/trailing spaces
+    text = text.strip()
 
-    # Ensure there's no extra spaces between sentences
-    cleaned_text = re.sub(r' +', ' ', cleaned_text)
+    # ✅ Fix multiple spaces and tabs
+    text = re.sub(r'\s+', ' ', text)
 
-    # Preserve double spacing if user entered it explicitly
-    cleaned_text = re.sub(r'(\s{2,})', '  ', cleaned_text)
+    # ✅ Ensure correct spacing after list numbers (Fixes "1.Text" → "1. Text")
+    text = re.sub(r'(\d+)\.(\S)', r'\1. \2', text)
 
-    # Fix any unwanted line breaks by checking if they are part of a list (keeping list structure intact)
-    cleaned_text = re.sub(r'([^\n])\n([^\n])', r'\1 \2', cleaned_text)
+    # ✅ Ensure proper spacing for bullet points ("-Text" → "- Text" & "•Text" → "• Text")
+    text = re.sub(r'(-|•)\s*(\S)', r'\1 \2', text)
 
-    # Optional: If there are specific section identifiers like 'Mass Storage System' etc., ensure they are kept as headings
-    cleaned_text = re.sub(r'(Mass Storage System|UNIX Security|Mobile OS)', r'\n\1\n', cleaned_text)
+    # ✅ Preserve manual line breaks inside list items
+    text = re.sub(r'(\d+\..*?)\n(\s+)(\S)', r'\1 \3', text)  # Joins lines within the same numbered item
+    text = re.sub(r'(-|•)\s*(.*?)\n(\s+)(\S)', r'\1 \2 \4', text)  # Joins lines within bullet points
 
-    # Optional: Adding paragraph breaks where needed
-    cleaned_text = cleaned_text.replace(' .', '.\n')
-
-    return cleaned_text
+    return text
 
 
 
@@ -147,24 +148,23 @@ def generate_doc():
 
     if not os.path.exists(template_path):
         return "Error: template.docx not found!", 404
-
     doc = Document(template_path)
-
    # Collect form data and clean all text fields if pasted from PDF
     semester = request.form.get('Semester', '')
     course_name = request.form.get('CourseName', '')
     course_code = request.form.get('CourseCode', '')
-    course_description = request.form.get('CourseDescription', '')
-    prerequisites = request.form.get('Prerequisites', '')
+    course_description = clean_pdf_text(request.form.get('CourseDescription', ''))
+    prerequisites =clean_pdf_text(request.form.get('Prerequisites', ''))
     objectives = [clean_pdf_text(obj.strip()) for obj in request.form.getlist('objective') if obj.strip()]
+    experiments = [clean_pdf_text(obj.strip()) for obj in request.form.getlist('experiments') if obj.strip()]
     course_outcomes = [clean_pdf_text(outcome.strip()) for outcome in request.form.getlist('course_outcome') if outcome.strip()]
     textbooks = [clean_pdf_text(textbook.strip()) for textbook in request.form.getlist('textbook') if textbook.strip()]
     references = [clean_pdf_text(reference.strip()) for reference in request.form.getlist('reference') if reference.strip()]
     assessments_grading = clean_pdf_text(request.form.get('AssessmentsGrading', ''))
-    course_format = clean_pdf_text(request.form.get('course_format', ''))
+    course_format = clean_pdf_text(request.form.get('courseformat', ''))
     assessments = clean_pdf_text(request.form.get('assessments', ''))
     grading = clean_pdf_text(request.form.get('grading', ''))
-
+    print(course_format)
     # Format placeholders into readable lists and apply `<REMOVE>` for empty values
     placeholders = {
         "{Semester}": semester if semester else "<REMOVE>",
@@ -174,9 +174,7 @@ def generate_doc():
         "{CourseDescription}": course_description if course_description else "<REMOVE>",
         "{prerequisitename}": "PREREQUISITES" if prerequisites else "<REMOVE>",
         "{Prerequisites}": prerequisites if prerequisites else "<REMOVE>",
-        "{assessmentsandgradingname}": "ASSESSMENTS AND GRADING" if assessments_grading else "<REMOVE>",
         "{AssessmentsGrading}": assessments_grading if assessments_grading else "<REMOVE>",
-        "{courseformatname}": "COURSE FORMAT\n" if course_format else "<REMOVE>",
         "{CourseFormat}": course_format if course_format else "<REMOVE>",
         "{Assessments}": assessments if assessments else "<REMOVE>",
         "{Grading}": grading if grading else "<REMOVE>",
@@ -216,14 +214,15 @@ def generate_doc():
         i += 1
     # Format units into a structured text block with periods
     units_text = ""
+    print(course_format)
     for i, (unit_title, unit_content, unit_periods) in enumerate(units, 1):
-        units_text += f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n\n{unit_content}\n\n"
-    print(units)
+        units_text += f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n{unit_content}"
     # Add formatted units and total periods to placeholders
-    placeholders["{TotalPeriods}"] ="TOTAL NUMBER OF PERIODS:" + str(total_periods) if total_periods > 0 else "<REMOVE>"
+    placeholders["{TotalPeriods}"] ="NUMBER OF THEORY PERIODS:" + str(total_periods) if total_periods > 0 else "<REMOVE>"
     replace_list_section(doc, "{Objectives}", objectives, title="COURSE OBJECTIVES")
+    replace_list_section(doc, "{Experiments}", experiments,title = "LIST OF EXPERIMENTS")
     replace_list_section(doc, "{Textbooks}", textbooks, title="TEXTBOOKS")
-    replace_list_section(doc, "{References}", references, title="References")
+    replace_list_section(doc, "{References}", references, title="REFERENCES")
     format_course_outcomes(doc, "{CourseOutcomes}", course_outcomes)
     replace_units_with_formatting(doc, units)
     replace_semester(doc, semester)
@@ -352,38 +351,39 @@ def replace_prerequisites(doc, prerequisites):
     """Adds 'PREREQUISITES' title above {Prerequisites} while maintaining formatting."""
     placeholder = "{Prerequisites}"
     title = "PREREQUISITES"
-    value = prerequisites if prerequisites else "<REMOVE>"
+    value = prerequisites.strip() if prerequisites else "<REMOVE>"
 
     for paragraph in doc.paragraphs:
         if placeholder in paragraph.text:
-            if not prerequisites.strip():
-                p_element = paragraph._element
-                p_element.getparent().remove(p_element)
-                return  
-            # Preserve original paragraph formatting
-            paragraph_format = paragraph.paragraph_format  
+            p_element = paragraph._element  
+            parent = p_element.getparent()
 
-            # Insert title above the placeholder
+            # ✅ If prerequisites are empty, remove the placeholder paragraph
+            if not prerequisites.strip():
+                parent.remove(p_element)
+                return  
+
+            # ✅ Insert Title Above Without Extra Blank Paragraph
             title_paragraph = paragraph.insert_paragraph_before("")
-            title_paragraph.style = paragraph.style  # Keep the same style
-            title_paragraph.paragraph_format.left_indent = paragraph_format.left_indent  # Copy indentation
-            title_paragraph.paragraph_format.first_line_indent = paragraph_format.first_line_indent  # Copy first-line indent
+            title_paragraph.style = paragraph.style  
+            title_paragraph.paragraph_format.left_indent = paragraph.paragraph_format.left_indent  
+            title_paragraph.paragraph_format.first_line_indent = paragraph.paragraph_format.first_line_indent  
+            title_paragraph.paragraph_format.space_before = Pt(12)  # 🔥 Add space before title
+            title_paragraph.paragraph_format.space_after = Pt(6)   # 🔥 Add space after title
 
             title_run = title_paragraph.add_run(title)
             title_run.bold = True
             title_run.font.size = Pt(11)
 
-            # Preserve the {Prerequisites} content while replacing the placeholder
-            for run in paragraph.runs:
-                if placeholder in run.text:
-                    run.text = run.text.replace(placeholder, value)
+            # ✅ Replace placeholder with prerequisites content
+            paragraph.text = value  
 
-            # Remove the paragraph if `<REMOVE>` is present
+            # ✅ Remove the paragraph if `<REMOVE>` is present
             if "<REMOVE>" in paragraph.text:
-                p_element = paragraph._element
-                p_element.getparent().remove(p_element)
+                parent.remove(p_element)
 
-            return  # Stop after processing the first occurrence
+            return  # ✅ Stop after first occurrence
+  # Stop after processing the first occurrence
 
 
 def replace_course_format(doc, course_format):
@@ -464,6 +464,153 @@ def replace_assessments_grading(doc, assessments_grading):
 
 
 
+def format_objectives(doc, placeholder, objectives):
+    """Replaces {Objectives} with formatted course objectives while adding a title."""
+    for paragraph in doc.paragraphs:
+        if placeholder in paragraph.text:
+            p_element = paragraph._element
+            parent = p_element.getparent()
+            
+            if not objectives:
+                parent.remove(p_element)
+                return 
+
+            paragraph.text = ""  # Clear placeholder while keeping position
+
+            # ✅ Insert Title Above Placeholder
+            title_paragraph = paragraph.insert_paragraph_before()
+            title_paragraph.style = paragraph.style
+            title_paragraph.paragraph_format.space_before = Pt(14)  
+            title_paragraph.paragraph_format.space_after = Pt(12)
+            title_paragraph.paragraph_format.left_indent = paragraph.paragraph_format.left_indent
+            title_paragraph.paragraph_format.first_line_indent = paragraph.paragraph_format.first_line_indent
+
+            title_run = title_paragraph.add_run("COURSE OBJECTIVES")
+            title_run.bold = True
+            title_run.font.size = Pt(11)
+
+            # ✅ Insert formatted Objectives
+            for i, objective in enumerate(objectives, 1):
+                obj_paragraph = paragraph.insert_paragraph_before()
+                obj_paragraph.style = paragraph.style
+
+                # **🔥 Apply Hanging Indentation using Word XML**
+                pPr = obj_paragraph._element.get_or_add_pPr()
+                ind = OxmlElement("w:ind")
+                ind.set(qn("w:left"), "950")
+                ind.set(qn("w:hanging"), "740")
+                pPr.append(ind)
+
+                # First line: Numbering (bold)
+                obj_run = obj_paragraph.add_run(f"{i}.   ")
+                obj_run.bold = True  
+                obj_run.font.size = Pt(11)
+
+                # Content (normal font)
+                content_run = obj_paragraph.add_run(objective)
+                content_run.bold = False
+                content_run.font.size = Pt(11)
+
+            return
+
+
+def format_textbooks(doc, placeholder, textbooks):
+    """Replaces {Textbooks} with formatted textbook list while adding a title."""
+    for paragraph in doc.paragraphs:
+        if placeholder in paragraph.text:
+            p_element = paragraph._element
+            parent = p_element.getparent()
+
+            if not textbooks:
+                parent.remove(p_element)
+                return 
+
+            paragraph.text = ""
+
+            # ✅ Insert Title Above Placeholder
+            title_paragraph = paragraph.insert_paragraph_before()
+            title_paragraph.style = paragraph.style
+            title_paragraph.paragraph_format.space_before = Pt(14)  
+            title_paragraph.paragraph_format.space_after = Pt(12)
+
+            title_run = title_paragraph.add_run("TEXTBOOKS")
+            title_run.bold = True
+            title_run.font.size = Pt(11)
+
+            # ✅ Insert formatted Textbooks
+            for i, textbook in enumerate(textbooks, 1):
+                tb_paragraph = paragraph.insert_paragraph_before()
+                tb_paragraph.style = paragraph.style
+
+                # **🔥 Apply Hanging Indentation using Word XML**
+                pPr = tb_paragraph._element.get_or_add_pPr()
+                ind = OxmlElement("w:ind")
+                ind.set(qn("w:left"), "950")
+                ind.set(qn("w:hanging"), "740")
+                pPr.append(ind)
+
+                # First line: Numbering (bold)
+                tb_run = tb_paragraph.add_run(f"{i}.   ")
+                tb_run.bold = True  
+                tb_run.font.size = Pt(11)
+
+                # Content (normal font)
+                content_run = tb_paragraph.add_run(textbook)
+                content_run.bold = False
+                content_run.font.size = Pt(11)
+
+            return
+
+
+def format_references(doc, placeholder, references):
+    """Replaces {References} with formatted reference list while adding a title."""
+    for paragraph in doc.paragraphs:
+        if placeholder in paragraph.text:
+            p_element = paragraph._element
+            parent = p_element.getparent()
+
+            if not references:
+                parent.remove(p_element)
+                return 
+
+            paragraph.text = ""
+
+            # ✅ Insert Title Above Placeholder
+            title_paragraph = paragraph.insert_paragraph_before()
+            title_paragraph.style = paragraph.style
+            title_paragraph.paragraph_format.space_before = Pt(14)  
+            title_paragraph.paragraph_format.space_after = Pt(12)
+
+            title_run = title_paragraph.add_run("REFERENCES")
+            title_run.bold = True
+            title_run.font.size = Pt(11)
+
+            # ✅ Insert formatted References
+            for i, reference in enumerate(references, 1):
+                ref_paragraph = paragraph.insert_paragraph_before()
+                ref_paragraph.style = paragraph.style
+
+                # **🔥 Apply Hanging Indentation using Word XML**
+                pPr = ref_paragraph._element.get_or_add_pPr()
+                ind = OxmlElement("w:ind")
+                ind.set(qn("w:left"), "950")
+                ind.set(qn("w:hanging"), "740")
+                pPr.append(ind)
+
+                # First line: Numbering (bold)
+                ref_run = ref_paragraph.add_run(f"{i}.   ")
+                ref_run.bold = True  
+                ref_run.font.size = Pt(11)
+
+                # Content (normal font)
+                content_run = ref_paragraph.add_run(reference)
+                content_run.bold = False
+                content_run.font.size = Pt(11)
+
+            return
+
+
+
 
 
 
@@ -473,10 +620,10 @@ def format_course_outcomes(doc, placeholder, course_outcomes):
         if placeholder in paragraph.text:
             p_element = paragraph._element
             parent = p_element.getparent()
+            
             if not course_outcomes:
                 parent.remove(p_element)
-                return 
-
+                return  
 
             paragraph.text = ""  # Clear placeholder while keeping position
 
@@ -484,30 +631,32 @@ def format_course_outcomes(doc, placeholder, course_outcomes):
             paragraph_format = paragraph.paragraph_format
 
             # ✅ Insert Title Above Placeholder
-            title_paragraph = paragraph.insert_paragraph_before("")
+            title_paragraph = paragraph.insert_paragraph_before()
             title_paragraph.style = paragraph.style
-            title_paragraph.paragraph_format.left_indent = paragraph_format.left_indent  # Keep indentation
-            title_paragraph.paragraph_format.first_line_indent = paragraph_format.first_line_indent  # Keep first-line indent
-            
+            title_paragraph.paragraph_format.space_before = Pt(14)  
+            title_paragraph.paragraph_format.space_after = Pt(12)  
+            title_paragraph.paragraph_format.left_indent = paragraph_format.left_indent  
+            title_paragraph.paragraph_format.first_line_indent = paragraph_format.first_line_indent  
+
             title_run = title_paragraph.add_run("COURSE OUTCOMES")
             title_run.bold = True
-            title_run.font.size = Pt(12)
+            title_run.font.size = Pt(11)
 
-            # ✅ Insert formatted COs
+            # ✅ Insert formatted COs **without adding an empty paragraph**
             for i, outcome in enumerate(course_outcomes, 1):
-                co_paragraph = paragraph.insert_paragraph_before("")
+                co_paragraph = paragraph.insert_paragraph_before()  # ✅ Fix: No empty string inserted
                 co_paragraph.style = paragraph.style
 
                 # **🔥 Apply Hanging Indentation using Word XML**
                 pPr = co_paragraph._element.get_or_add_pPr()
                 ind = OxmlElement("w:ind")
-                ind.set(qn("w:left"), "680")  # Left indentation (0.5 inch)
-                ind.set(qn("w:hanging"), "480")  # Hanging indent (0.25 inch)
+                ind.set(qn("w:left"), "950")  
+                ind.set(qn("w:hanging"), "740")  
                 pPr.append(ind)
 
                 # First line: CO label (bold)
-                co_run = co_paragraph.add_run(f"CO{i}  ")
-                co_run.bold = True
+                co_run = co_paragraph.add_run(f"CO{i}      ") 
+                co_run.bold = True  
                 co_run.font.size = Pt(11)
 
                 # Content (normal font)
@@ -515,7 +664,8 @@ def format_course_outcomes(doc, placeholder, course_outcomes):
                 content_run.bold = False
                 content_run.font.size = Pt(11)
 
-            return  # Stop after first occurrence
+            return  
+        
 
 def replace_units_with_formatting(doc, units):
     """Finds {Units} placeholder and inserts formatted units with proper indentation & normal content formatting."""
@@ -524,7 +674,6 @@ def replace_units_with_formatting(doc, units):
             p_element = paragraph._element  # Store reference to remove placeholder
             parent = p_element.getparent()  # Get parent XML element
             paragraph_style = paragraph.style  # Store the style of the original paragraph
-
             # Create a new paragraph at the same location before removing {Units}
             new_paragraph = paragraph.insert_paragraph_before("")
             new_paragraph.style = paragraph_style  # Apply the same style as the placeholder
@@ -534,14 +683,16 @@ def replace_units_with_formatting(doc, units):
                 # Insert Unit Title (Bold) with correct style
                 title_paragraph = new_paragraph.insert_paragraph_before("")
                 title_paragraph.style = paragraph_style  # Apply same style
-                title_run = title_paragraph.add_run(f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})\n")
+                title_run = title_paragraph.add_run(f"UNIT {i}: {unit_title} (No. of Periods: {unit_periods})")
+                title_paragraph.paragraph_format.space_before = Pt(12)  # 🔥 Space before title
+                title_paragraph.paragraph_format.space_after = Pt(10)  
                 title_run.bold = True
-                title_run.font.size = Pt(12)
+                title_run.font.size = Pt(11)
 
                 # Insert Unit Content (Normal) with correct indentation
                 content_paragraph = new_paragraph.insert_paragraph_before("")
-                content_paragraph.style = paragraph_style  # Apply same style
-                content_run = content_paragraph.add_run(f"{unit_content}\n\n")
+                content_paragraph.style = paragraph_style  # Apply same style  
+                content_run = content_paragraph.add_run(f"{unit_content}")
                 content_run.bold = False  # 🔥 Fix: Ensure normal text
                 content_run.font.size = Pt(11)
 
@@ -593,6 +744,53 @@ def replace_total_periods(doc, units):
             if "<REMOVE>" in paragraph.text:
                 p_element = paragraph._element
                 p_element.getparent().remove(p_element)
+
+            return  # ✅ Stop after first occurrence
+def replace_list_of_experiments(doc, placeholder, experiments):
+    """
+    Replaces {ListOfExperiments} with a properly formatted numbered list while keeping formatting.
+    - `placeholder`: The placeholder text to replace (e.g., {ListOfExperiments})
+    - `experiments`: The list of experiments to insert
+    """
+    for paragraph in doc.paragraphs:
+        if placeholder in paragraph.text:
+            parent = paragraph._element.getparent()
+
+            # ✅ If no experiments exist, remove placeholder and exit
+            if not experiments:
+                parent.remove(paragraph._element)
+                return  
+
+            paragraph.text = ""  # Clear placeholder while keeping position
+
+            # Preserve paragraph formatting
+            paragraph_format = paragraph.paragraph_format
+            
+            # ✅ Insert Title: "PRACTICAL EXERCISES"
+            title_paragraph = paragraph.insert_paragraph_before("")
+            title_paragraph.style = paragraph.style  
+            title_paragraph.paragraph_format.left_indent = paragraph_format.left_indent  
+            title_paragraph.paragraph_format.first_line_indent = paragraph_format.first_line_indent  
+
+            title_run = title_paragraph.add_run("PRACTICAL EXERCISES")
+            title_run.bold = True
+            title_run.font.size = Pt(11)
+
+            # ✅ Insert formatted list of experiments
+            for index, experiment in enumerate(experiments, 1):
+                exp_paragraph = paragraph.insert_paragraph_before("")
+                exp_paragraph.style = paragraph.style  
+                exp_paragraph.paragraph_format.left_indent = paragraph_format.left_indent  
+                exp_paragraph.paragraph_format.first_line_indent = paragraph_format.first_line_indent  
+
+                # Add numbering (bold)
+                exp_run = exp_paragraph.add_run(f"{index}. ")
+                exp_run.bold = True  
+
+                # Add the actual content
+                content_run = exp_paragraph.add_run(experiment.strip())  
+                content_run.bold = False  
+                content_run.font.size = Pt(11)
 
             return  # ✅ Stop after first occurrence
 

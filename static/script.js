@@ -52,6 +52,37 @@ document.addEventListener("DOMContentLoaded", function () {
             removedSections.value = sections.join(",");
         }
     };
+    var addExperimentBtn = document.getElementById("addexperiments");
+
+    if (addExperimentBtn) {
+        addExperimentBtn.addEventListener("click", function () {
+            var experimentsDiv = document.getElementById("experimentsFields"); // ✅ Correct ID
+            var newIndex = experimentsDiv.querySelectorAll("input[name='experiments']").length + 1;
+    
+            var experimentDiv = document.createElement("div");
+            experimentDiv.className = "experiment-item";
+    
+            var newInput = document.createElement("input");
+            newInput.type = "text";
+            newInput.name = "experiments"; // ✅ Consistent with HTML name attribute
+            newInput.placeholder = "Experiment " + newIndex;
+            newInput.required = true;
+    
+            var removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "remove-btn";
+            removeBtn.innerText = "Remove";
+            removeBtn.onclick = function () {
+                experimentDiv.remove();
+            };
+    
+            experimentDiv.appendChild(newInput);
+            experimentDiv.appendChild(removeBtn);
+            experimentsDiv.appendChild(experimentDiv);
+        });
+    }
+    
+
 
     /***** Course Objectives Dynamic Input *****/
     var addObjectiveBtn = document.getElementById("addObjective");

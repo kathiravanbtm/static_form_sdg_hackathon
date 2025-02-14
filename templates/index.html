@@ -19,6 +19,10 @@
       <button type="button" onclick="addSection('courseOutcomes')">Add Course Outcomes</button>
       <button type="button" onclick="addSection('textbooks')">Add Textbooks</button>
       <button type="button" onclick="addSection('references')">Add References</button>
+      <button type="button" onclick="addSection('listofexperiments')">Add experiments</button>
+      <button type="button" onclick="addSection('courseformat')">Add course format</button>
+      <button type="button" onclick="addSection('youtubeReferences')">Add youtube references</button>
+
     </aside>
 
     <!-- Main Content -->
@@ -92,7 +96,12 @@
 
         </div>
 
-        
+
+        <div class="section" id="courseformat" style="display:none;">
+          <h3>COURSE FORMAT</h3>
+          <textarea name="courseformat"></textarea>
+          <button type="button" onclick="removeSection('courseformat')">Remove Section</button>
+        </div>
 
 
         <!-- Assessments & Grading Section -->
@@ -139,6 +148,36 @@
           <button type="button" id="addReference" onclick="addInputField('referenceFields')">+ Add Reference</button>
           <button type="button" onclick="removeSection('references')">Remove Section</button>
         </div>
+
+
+        <div class="section" id="listofexperiments" style="display:none;">
+          <h3>List of Experiments</h3>
+          <div id="experimentsFields">
+              <input type="text" name="experiments" placeholder="Experiment 1">
+              <input type="text" name="experiments" placeholder="Experiment 2">
+              <input type="text" name="experiments" placeholder="Experiment 3">
+              <input type="text" name="experiments" placeholder="Experiment 4">
+              <input type="text" name="experiments" placeholder="Experiment 5">
+          </div>
+          <button type="button" id="addexperiments">+ Add Experiment</button>
+          <button type="button" onclick="removeSection('listofexperiments')">Remove Section</button> <!-- ✅ Fixed Typo -->
+      </div>
+      
+      <div id="youtubeReferences" class="section" style="display:none;">
+        <h3>YouTube References</h3>
+        <div id="youtubeFields">
+            <!-- Initially populated YouTube reference field -->
+            <div class="youtube-item">
+                <input type="text" name="youtube_title_1" placeholder="channel name">
+                <textarea name="youtube_desc_1" placeholder="description"></textarea>
+                <input type="text" name="youtube_url_1" placeholder="YouTube URL">
+            </div>
+        </div>
+        <button type="button" id="addYouTube">+ Add YouTube Reference</button>
+        <button type="button" onclick="removeSection('youtubeReferences')">Remove Section</button>
+    </div>
+    
+
 
         <button type="submit">Generate Document</button>
       </form>
